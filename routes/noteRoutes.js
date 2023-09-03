@@ -1,6 +1,9 @@
 const express = require("express");
 const noteController = require("../controllers/noteController");
+const validateToken = require("../middlewares/tokenValidationHandler");
 const router = express.Router();
+
+router.use(validateToken);
 
 // GET /todos - Get all todos
 router.get("/", noteController.getAllNotes);
@@ -15,6 +18,6 @@ router.get("/:id", noteController.getNote);
 router.put("/:id", noteController.updateNote);
 
 // DELETE /todos/:id - Delete a specific todo
-router.delete("/:id", noteController.deletNote);
+router.delete("/:id", noteController.deleteNote);
 
 module.exports = router;

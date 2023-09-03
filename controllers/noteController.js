@@ -1,27 +1,28 @@
-// Sample todo data
-// let todos = [
+// Sample note data
+// let notes = [
 //   { id: 1, text: "Learn Express.js", completed: false },
-//   { id: 2, text: "Build a todo app", completed: true },
+//   { id: 2, text: "Build a note app", completed: true },
 // ];
 const Note = require("../model/Note");
 
-// GET /todos - Get all todos
+// GET /notes - Get all notes
 const getAllNotes = async (req, res) => {
   try {
-    const notes = await Note.find();
+    const notes = await Note.find({ user_id: req.user });
     res.json(notes);
   } catch (error) {
-    res.status(500).json({ error: "An error occurred while retrieving todos" });
+    res.status(500).json({ error: "An error occurred while retrieving notes" });
   }
 };
 
-// POST /todos - Create a new todo
+// POST /notes - Create a new note
 const addNote = async (req, res) => {
   try {
     const { name, content } = req.body;
     const note = new Note({
       name,
       content,
+      user_id: req.user,
     });
     await note.save();
     res.status(201).json(note);
@@ -32,26 +33,37 @@ const addNote = async (req, res) => {
   }
 };
 
-// GET /todos/:id - Get a specific todo
+// GET /notes/:id - Get a specific note
 const getNote = async (req, res) => {
   const note = await Note.findById(req.params.id);
   if (note) {
+    if (note.user_id.toString() !== req.user) {
+      return res
+        .status(403)
+        .json({ error: "User doesn't have an access to this note" });
+    }
     res.json(note);
   } else {
-    res.status(404).json({ error: "Todo not found" });
+    res.status(404).json({ error: "note not found" });
   }
 };
 
-// PUT /todos/:id - Update a specific todo
+// PUT /notes/:id - Update a specific note
 const updateNote = async (req, res) => {
   try {
+    const note = await Note.findById(req.params.id);
+    if (!note) {
+      res.status(404).json({ error: "Note not found" });
+    }
+    if (note.user_id.toString() !== req.user) {
+      return res
+        .status(403)
+        .json({ error: "User doesn't have an access to this note" });
+    }
     const updatedNote = await Note.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
-    // console.log(note);
-    if (!updatedNote) {
-      res.status(404).json({ error: "Note not found" });
-    }
+
     res.json(updatedNote);
   } catch (error) {
     res
@@ -60,19 +72,26 @@ const updateNote = async (req, res) => {
   }
 };
 
-// DELETE /todos/:id - Delete a specific todo - DONE
-const deletNote = async (req, res) => {
+// DELETE /notes/:id - Delete a specific note - DONE
+const deleteNote = async (req, res) => {
   const id = req.params.id;
-  const result = await Note.findByIdAndDelete(id);
-  if (result) {
-    // Deleted the todo with the given ID
+  const note = await Note.findById(id);
+  if (note) {
+    if (note.user_id.toString() !== req.user) {
+      return res
+        .status(403)
+        .json({ error: "User doesn't have an access to this note" });
+    }
+    const result = await Note.findByIdAndDelete(id);
+
+    // Deleted the note with the given ID
     // Handle the response accordingly
     res.json(result);
   } else {
-    // Todo with the given ID not found
+    // note with the given ID not found
     // Handle the response accordingly
     res.status(404).json({ error: "Note not found" });
   }
 };
 
-module.exports = { getAllNotes, getNote, addNote, updateNote, deletNote };
+module.exports = { getAllNotes, getNote, addNote, updateNote, deleteNote };
