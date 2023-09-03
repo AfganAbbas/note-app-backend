@@ -15,9 +15,7 @@ app.use("/api/auth", userRoute);
 app.use("/api/notes", noteRoute);
 
 mongoose
-  .connect(
-    "mongodb+srv://admin:Olk5SG2dxcVibt2E@cluster0.rmxqttr.mongodb.net/?retryWrites=true&w=majority"
-  )
+  .connect(process.env.DB_URL)
   .then(() => {
     console.log("Connected to DB");
   })
